@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "Variable.h"
+#include "Literal.h"
 #include "commands.h"
 #include "Robot.h"
 
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     Maze maze;
 
     std::string command;
-    std::vector<Variable> variables;
+    std::vector<Literal> literals;
 
     std::cout << ">>> ";
     while (std::getline(std::cin, command))
@@ -59,16 +59,16 @@ int main(int argc, char **argv)
         }
         if (command.find("digit") != std::string::npos || command.find("logic") != std::string::npos)
         {
-            variables.push_back(parseVariableDeclaration(command));
-            variables.back().print();
+            literals.push_back(parseLiteralDeclaration(command));
+            literals.back().print();
         } 
         else if (command.find("size") != std::string::npos)
         {
-            std::cout << getSize(command, variables);
+            std::cout << getSize(command, literals);
         }
         else if (command.find("print") != std::string::npos)
         {
-            std::cout << printVar(command, variables);
+            std::cout << printVar(command, literals);
         }
         else
         {

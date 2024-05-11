@@ -4,7 +4,7 @@
 digit varName[[i,j,..., n]]=0|1|2|3|...|N;
 logic varName[[i,j,..., n]]=true|false;
 */
-Variable parseVariableDeclaration(const std::string &a_declaration) {
+Literal parseLiteralDeclaration(const std::string &a_declaration) {
     // std::regex r("(digit|logic)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\[[0-9]+(,[0-9]+)*\\])?\\s*=\\s*(.*);");
     std::regex r("(digit|logic)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\[[0-9]+(\\s*,\\s*[0-9]+)*\\])?\\s*=\\s*(.*);");
 
@@ -21,14 +21,14 @@ Variable parseVariableDeclaration(const std::string &a_declaration) {
     if (dimensions.empty()) {
         dimensions = "[1]";
     }
-    Variable var(varType, name, dimensions, defaultValue);
+    Literal var(varType, name, dimensions, defaultValue);
     return var;
 }
 
 
 
 // Получить размерность переменной
-std::string getSize(const std::string &a_cmd, const std::vector<Variable> &a_variables)
+std::string getSize(const std::string &a_cmd, const std::vector<Literal> &a_literals)
 {
     std::regex sizeRegex("size\\(([a-zA-Z_][a-zA-Z0-9_]*)\\);");
     std::ostringstream oss;
@@ -39,9 +39,9 @@ std::string getSize(const std::string &a_cmd, const std::vector<Variable> &a_var
         if (match.size() == 2)
         {
             std::string varName = match[1].str();
-            Variable var;
+            Literal var;
 
-            if (findVariable(varName, a_variables, var))
+            if (findLiteral(varName, a_literals, var))
             {
                 oss << "Найдена переменная: " << varName << std::endl;
                 std::vector<int> size = var.size();

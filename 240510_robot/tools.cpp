@@ -3,13 +3,13 @@
 
 
 // Поиск переменной по имени
-bool findVariable(const std::string& varName, const std::vector<Variable>& a_variables, Variable& foundVariable)
+bool findLiteral(const std::string& varName, const std::vector<Literal>& a_literals, Literal& foundLiteral)
 {
-    for (const auto& var : a_variables)
+    for (const auto& var : a_literals)
     {
         if (var.getName() == varName)
         {
-            foundVariable = var;
+            foundLiteral = var;
             return true;
         }
     }

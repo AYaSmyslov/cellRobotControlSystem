@@ -1,7 +1,7 @@
 project (240510_robot CXX)
 
 set(SOURCES main.cpp)
-ADD_CLASS(SOURCES Variable)
+ADD_CLASS(SOURCES Literal)
 ADD_HEADER(SOURCES commands)
 ADD_CPP(SOURCES tools)
 ADD_CPP(SOURCES declare)

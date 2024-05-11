@@ -2,9 +2,9 @@
 
 
 
-int getArrayElement(const std::vector<int> &indices, Variable &variable)
+int getArrayElement(const std::vector<int> &indices, Literal &literal)
 {
-    const auto &dimensions = variable.getDim();
+    const auto &dimensions = literal.getDim();
 
     if (dimensions.size() < indices.size())
     {
@@ -30,7 +30,7 @@ int getArrayElement(const std::vector<int> &indices, Variable &variable)
     {
         newDim = {1};
     }
-    std::vector<int> newValue = variable.getValue();
+    std::vector<int> newValue = literal.getValue();
     int k = 0;
     for (const auto &i : indices)
     {
@@ -42,8 +42,8 @@ int getArrayElement(const std::vector<int> &indices, Variable &variable)
         newValue.erase(newValue.begin() + (indEnd - indBegin + 1), newValue.end());
         k++;
     }
-    Variable var(variable.getType(), variable.getName(), newDim, newValue);
-    variable = var;
+    Literal var(literal.getType(), literal.getName(), newDim, newValue);
+    literal = var;
 
     return 0;
 }
@@ -85,7 +85,7 @@ std::string printFormatted(const std::vector<int> &a_sizes, std::vector<int> &a_
 }
 
 // Вывести значения переменных
-std::string printVar(const std::string &a_cmd, const std::vector<Variable> &a_variables)
+std::string printVar(const std::string &a_cmd, const std::vector<Literal> &a_literals)
 {
     // std::regex printRegex("print\\(([a-zA-Z_][a-zA-Z0-9_]*)\\);");
     // std::regex printRegex("print\\(([a-zA-Z_][a-zA-Z0-9_]*)(\\[(\\d+(?:,\\s*\\d+)*)\\])?\\);");
@@ -113,9 +113,9 @@ std::string printVar(const std::string &a_cmd, const std::vector<Variable> &a_va
                 }
             }
             std::string varName = match[1].str();
-            Variable var;
+            Literal var;
 
-            if (findVariable(varName, a_variables, var))
+            if (findLiteral(varName, a_literals, var))
             {
                 oss << "Значения переменной " << varName << ":" << std::endl;
                 if (match.size() >= 3)
