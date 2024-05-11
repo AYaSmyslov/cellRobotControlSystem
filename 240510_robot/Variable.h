@@ -4,17 +4,21 @@
 #include <vector>
 #include <sstream>
 
-
+enum varTypes
+{
+	digit = 0,
+	logic
+};
 
 class Variable
 {
 public:
 	Variable();
 	Variable(
-		const std::string& a_name,
-		const std::vector<int>& a_dim,
-		const std::vector<int>& a_defVal,
-		bool a_logic
+		const varTypes &a_varType,
+		const std::string &a_name,
+		const std::vector<int> &a_dim,
+		const std::vector<int> &a_defVal
 	);
 	Variable(
 		const std::string& a_varType,
@@ -26,7 +30,11 @@ public:
 
 	void print() const;
 	std::vector<int> size() const;
+	varTypes getType() const;
 	std::string getName() const;
+	std::vector<int> getDim() const;
+	std::vector<int> getValue() const;
+	
 
 
 private:
@@ -35,13 +43,8 @@ private:
 	int _convertStrToDim(const std::string& a_dim);
 	int _convertStrToDefVal(const std::string& a_defVal);
 
-	std::string _name; // Имя переменной
-	std::vector<int> _dimensions; // Размерности переменной
-	std::vector<int> _defaultVal; // Значение по умолчанию
-	enum varTypes
-	{
-		digit = 0,
-		logic
-	};
-	varTypes _varType;
+	varTypes _varType; // Тип
+	std::string _name; // Имя
+	std::vector<int> _dimensions; // Размерность
+	std::vector<int> _value; // Значение
 };

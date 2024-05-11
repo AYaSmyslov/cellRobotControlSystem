@@ -3,8 +3,10 @@
 #include <regex>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include "Variable.h"
+#include "commands.h"
 #include "Robot.h"
 
 // Определение структуры лабиринта
@@ -16,74 +18,7 @@ struct Maze
 
 
 
-/*
-digit varName[[i,j,..., n]]=0|1|2|3|...|N;
-logic varName[[i,j,..., n]]=true|false;
-*/
-Variable parseVariableDeclaration(const std::string &a_declaration) {
-    // std::regex r("(digit|logic)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\[[0-9]+(,[0-9]+)*\\])?\\s*=\\s*(.*);");
-    std::regex r("(digit|logic)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\[[0-9]+(\\s*,\\s*[0-9]+)*\\])?\\s*=\\s*(.*);");
 
-    std::smatch match;
-    
-    std::string varType, name, dimensions, defaultValue;
-
-    if (std::regex_search(a_declaration, match, r) && match.size() > 1) {
-        varType = match.str(1);
-        name = match.str(2);
-        dimensions = match.str(3);
-        defaultValue = match.str(5);
-    }
-    if (dimensions.empty()) {
-        dimensions = "[1]";
-    }
-    Variable var(varType, name, dimensions, defaultValue);
-    return var;
-}
-
-
-
-// Получить размерность переменной
-void getSize(const std::string &a_cmd, const std::vector<Variable> &a_variables) {
-    std::regex sizeRegex("size\\(([a-zA-Z_][a-zA-Z0-9_]*)\\);");
-
-    std::smatch match;
-    if (std::regex_match(a_cmd, match, sizeRegex))
-    {
-        if (match.size() == 2)
-        {
-            std::string varName = match[1].str();
-
-            for (const auto& var : a_variables)
-            {
-                if (var.getName() == varName)
-                {
-                    std::cout << "Найдена переменная: " << varName << std::endl;
-                    std::vector<int> size = var.size();
-                    std::cout << '[';
-
-                    for (int i=0; i<size.size(); i++)
-                    {
-                        std::cout << size[i];
-                        if (i<size.size()-1)
-                        {
-                            std::cout << ", ";
-                        }
-                    }
-                    std::cout << ']' << std::endl;
-
-                    return;
-                }
-            }
-
-            std::cout << "Переменная с именем " << varName << " не найдена." << std::endl;
-        }
-    } 
-    else
-    {
-        std::cout << "Команда не соответствует формату size(varName);" << std::endl;
-    }
-}
 
 
 
@@ -129,7 +64,11 @@ int main(int argc, char **argv)
         } 
         else if (command.find("size") != std::string::npos)
         {
-            getSize(command, variables);
+            std::cout << getSize(command, variables);
+        }
+        else if (command.find("print") != std::string::npos)
+        {
+            std::cout << printVar(command, variables);
         }
         else
         {

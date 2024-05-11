@@ -9,12 +9,12 @@ Variable::Variable()
 
 
 Variable::Variable(
-    const std::string& a_name,
-    const std::vector<int>& a_dim,
-    const std::vector<int>& a_defVal,
-    bool a_logic
+    const varTypes &a_varType,
+    const std::string &a_name,
+    const std::vector<int> &a_dim,
+    const std::vector<int> &a_defVal
 )
-    : _name(a_name), _dimensions(a_dim), _defaultVal(a_defVal) {}
+    : _varType(a_varType), _name(a_name), _dimensions(a_dim), _value(a_defVal) {}
 
 
 
@@ -90,7 +90,7 @@ int Variable::_convertStrToDefVal(const std::string& a_defVal)
         size *= i;
     }
 
-    _defaultVal.resize(size);
+    _value.resize(size);
     if (_varType == varTypes::digit)
     {
         int base = 10;
@@ -105,7 +105,7 @@ int Variable::_convertStrToDefVal(const std::string& a_defVal)
                 base = 8;
             }
         }
-        std::fill(_defaultVal.begin(), _defaultVal.end(), stoi(a_defVal, nullptr, base));
+        std::fill(_value.begin(), _value.end(), stoi(a_defVal, nullptr, base));
         return 0;
 
     }
@@ -114,12 +114,12 @@ int Variable::_convertStrToDefVal(const std::string& a_defVal)
 
         if (a_defVal == "true")
         {
-            std::fill(_defaultVal.begin(), _defaultVal.end(), 1);
+            std::fill(_value.begin(), _value.end(), 1);
             return 0;
         }
         else if (a_defVal == "false")
         {
-            std::fill(_defaultVal.begin(), _defaultVal.end(), 0);
+            std::fill(_value.begin(), _value.end(), 0);
             return 0;
 
         }
@@ -138,7 +138,7 @@ void Variable::print() const
     }
     std::cout << std::endl;
     std::cout << "Default value: ";
-    for (int val : _defaultVal) {
+    for (int val : _value) {
         std::cout << val << " ";
     }
     std::cout << std::endl;
@@ -152,7 +152,30 @@ std::vector<int> Variable::size() const
     return _dimensions;
 }
 
+
+
+varTypes Variable::getType() const
+{
+    return _varType;
+}
+
+
+
 std::string Variable::getName() const
 {
     return _name;
+}
+
+
+
+std::vector<int> Variable::getDim() const
+{
+    return _dimensions;
+}
+
+
+
+std::vector<int> Variable::getValue() const
+{
+    return _value;
 }
