@@ -2,9 +2,9 @@
 
 
 
-int getArrayElement(const std::vector<int> &indices, Literal &literal)
+int getArrayElement(const std::vector<int> &indices, Variable &variable)
 {
-    const auto &dimensions = literal.getDim();
+    const auto &dimensions = variable.getDim();
 
     if (dimensions.size() < indices.size())
     {
@@ -14,23 +14,14 @@ int getArrayElement(const std::vector<int> &indices, Literal &literal)
     std::vector<int> newDim;
     if (dimensions.size() > indices.size())
     {
-        // 2 2 2
-        // 1 1
-        // 2
-
-        // 2 2
-        // 1 1
-        // 2
         int diff =  dimensions.size() -(dimensions.size() - indices.size());
         newDim.assign(dimensions.begin() + diff, dimensions.end());
-        // newDim = {dimensions.back() - (dimensions.back() - indices.back())};
-
     }
     else
     {
         newDim = {1};
     }
-    std::vector<int> newValue = literal.getValue();
+    std::vector<int> newValue = variable.getValue();
     int k = 0;
     for (const auto &i : indices)
     {
@@ -42,8 +33,8 @@ int getArrayElement(const std::vector<int> &indices, Literal &literal)
         newValue.erase(newValue.begin() + (indEnd - indBegin + 1), newValue.end());
         k++;
     }
-    Literal var(literal.getType(), literal.getName(), newDim, newValue);
-    literal = var;
+    Variable var(variable.getType(), variable.getName(), newDim, newValue);
+    variable = var;
 
     return 0;
 }
@@ -84,12 +75,12 @@ std::string printFormatted(const std::vector<int> &a_sizes, std::vector<int> &a_
     return oss.str();
 }
 
+
+
 // Вывести значения переменных
-std::string printVar(const std::string &a_cmd, const std::vector<Literal> &a_literals)
+std::string printVar(const std::string &a_cmd, const std::vector<Variable> &a_variables)
 {
-    // std::regex printRegex("print\\(([a-zA-Z_][a-zA-Z0-9_]*)\\);");
-    // std::regex printRegex("print\\(([a-zA-Z_][a-zA-Z0-9_]*)(\\[(\\d+(?:,\\s*\\d+)*)\\])?\\);");
-    std::regex printRegex("print\\(([a-zA-Z_][a-zA-Z0-9_]*)(\\[([0-9]+(\\s*,\\s*[0-9]+)*)\\])?\\);");
+    std::regex printRegex("print\\(([a-zA-Z_][a-zA-Z0-9_]*)(\\[([0-9]+(\\s*,\\s*[0-9]+)*)\\])?\\)");
     std::ostringstream oss;
 
     std::smatch match;
@@ -113,9 +104,9 @@ std::string printVar(const std::string &a_cmd, const std::vector<Literal> &a_lit
                 }
             }
             std::string varName = match[1].str();
-            Literal var;
+            Variable var;
 
-            if (findLiteral(varName, a_literals, var))
+            if (findVariable(varName, a_variables, var))
             {
                 oss << "Значения переменной " << varName << ":" << std::endl;
                 if (match.size() >= 3)

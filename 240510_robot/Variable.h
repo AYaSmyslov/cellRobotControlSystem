@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <stdexcept>
 
 enum varTypes
 {
@@ -28,8 +29,15 @@ public:
 	);
 	~Variable();
 
+    // Variable& operator=(const Variable& other);
+	// bool operator==(const Variable& other) const;
+
+
 	void print() const;
 	std::vector<int> size() const;
+	void resize(const std::vector<int> &a_sizes);
+	Variable toLogic();
+	Variable toDigit();
 	varTypes getType() const;
 	std::string getName() const;
 	std::vector<int> getDim() const;

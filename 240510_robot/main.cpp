@@ -5,9 +5,11 @@
 #include <vector>
 #include <algorithm>
 
-#include "Literal.h"
+#include "Variable.h"
 #include "commands.h"
 #include "Robot.h"
+
+
 
 // Определение структуры лабиринта
 struct Maze
@@ -18,28 +20,25 @@ struct Maze
 
 
 
-
-
-
-
 // Функция для интерпретации команд
 void interpretCommand(const std::string &command, Robot &robot, Maze &maze)
 {
     // ... реализация ...
-
 }
+
+
 
 int main(int argc, char **argv)
 {
-    for (int i = 1 ; i < argc ; ++i)
+    for (int i = 1; i < argc; ++i)
     {
         const char *arg = argv[i];
         if (!strcmp(arg, "--help"))
         {
-                puts(R"(
+            puts(R"(
 240510_robot - is very useful utility
 )");
-                return 0;
+            return 0;
         }
     }
 
@@ -47,7 +46,7 @@ int main(int argc, char **argv)
     Maze maze;
 
     std::string command;
-    std::vector<Literal> literals;
+    std::vector<Variable> variables;
 
     std::cout << ">>> ";
     while (std::getline(std::cin, command))
@@ -57,23 +56,53 @@ int main(int argc, char **argv)
         {
             break;
         }
-        if (command.find("digit") != std::string::npos || command.find("logic") != std::string::npos)
+        if (command.find(';') != std::string::npos)
         {
-            literals.push_back(parseLiteralDeclaration(command));
-            literals.back().print();
-        } 
-        else if (command.find("size") != std::string::npos)
-        {
-            std::cout << getSize(command, literals);
+            std::size_t pos = 0;
+            std::string delimiter = ";";
+            while ((pos = command.find(delimiter)) != std::string::npos)
+            {
+                std::string subcommand = command.substr(0, pos);
+                if (!subcommand.empty())
+                {
+                    if (subcommand.find("digit") != std::string::npos || subcommand.find("logic") != std::string::npos)
+                    {
+                        Variable tmp(parseVariableDeclaration(subcommand)), tmp2;
+                        if (findVariable(tmp.getName(), variables, tmp2))
+                        {
+                            auto it = std::find_if(variables.begin(), variables.end(), [&](const Variable &var)
+                                                   {
+                                                       return var.getName() == tmp2.getName();
+                                                   });
+                            if (it != variables.end())
+                            {
+                                variables.erase(it);
+                            }
+                        }
+                        variables.push_back(tmp);
+                        variables.back().print();
+                    }
+                    else if (subcommand.find("resize") != std::string::npos)
+                    {
+                        std::cout << resize(subcommand, variables);
+                    }
+                    else if (subcommand.find("size") != std::string::npos)
+                    {
+                        std::cout << getSize(subcommand, variables);
+                    }
+                    else if (subcommand.find("print") != std::string::npos)
+                    {
+                        std::cout << printVar(subcommand, variables);
+                    }
+                    else
+                    {
+                        interpretCommand(subcommand, robot, maze);
+                    }
+                }
+                command.erase(0, pos + delimiter.length());
+            }
         }
-        else if (command.find("print") != std::string::npos)
-        {
-            std::cout << printVar(command, literals);
-        }
-        else
-        {
-            interpretCommand(command, robot, maze);
-        }
+
         std::cout << ">>> ";
     }
 
