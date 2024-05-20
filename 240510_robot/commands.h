@@ -3,6 +3,7 @@
 #include <string>
 #include <regex>
 #include "Variable.h"
+#include "Parser.h"
 
 // tools.cpp - НЕ КОМАНДЫ, эти функции используются командами ниже
 bool findVariable(const std::string &varName, const std::vector<Variable> &a_literals, Variable &foundVariable);

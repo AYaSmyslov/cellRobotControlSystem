@@ -6,10 +6,12 @@ set(SOURCES main.cpp
 	Robot.cpp
 	tools.cpp
 	Variable.cpp
+	Parser.cpp
 )
 
 set(HEADERS
 	Variable.h
+	Parser.h
 	commands.h
 	Robot.h
 )

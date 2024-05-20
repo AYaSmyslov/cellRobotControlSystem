@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
 
 enum varTypes
 {
@@ -42,6 +43,8 @@ public:
 	std::string getName() const;
 	std::vector<int> getDim() const;
 	std::vector<int> getValue() const;
+
+	void setValue(const std::vector<int> &a_value, const std::vector<int> &a_size);
 	
 
 
