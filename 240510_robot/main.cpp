@@ -105,6 +105,104 @@ int main(int argc, char **argv)
 
 						std::cout << printVar(subcommand, variables);
 					}
+					else if (subcommand.find("most") != std::string::npos)
+					{
+						std::regex re_single_number(R"(^most\((\d+)\)$)");
+						std::regex re_array(R"(^most\(\[(\d+(?:,\d+)*)\]\)$)");
+						std::smatch match;
+
+						if (std::regex_match(subcommand, match, re_single_number))
+						{
+							int number = std::stoi(match[1]);
+							std::vector<int> numbers = { number };
+
+							bool result = most(numbers);
+
+							std::cout << "The input matches the pattern." << std::endl;
+							std::cout << "Expression: " << number << std::endl;
+							std::cout << "Result of most(expression): " << std::boolalpha << result << std::endl;
+						} 
+						else if (std::regex_match(subcommand, match, re_array))
+						{
+							std::vector<int> numbers = parseNumbers(match[1]);
+
+							bool result = most(numbers);
+
+							std::cout << "The input matches the pattern." << std::endl;
+							std::cout << "Expression: " << match[1] << std::endl;
+							std::cout << "Result of most(expression): " << std::boolalpha << result << std::endl;
+						}
+						else
+						{
+							// Робот обижается
+						}
+					}
+					else if (subcommand.find("&&") != std::string::npos)
+					{
+						std::regex re(R"((\d+)\s*&&\s*(\d+))");
+						std::smatch match;
+
+						if (std::regex_match(subcommand, match, re)) {
+							int const1 = std::stoi(match[1]);
+							int const2 = std::stoi(match[2]);
+
+							bool result = static_cast<bool>(const1) && static_cast<bool>(const2);
+							
+							std::cout << result;
+						}
+						else
+						{
+							// Робот обижается
+						}
+					}
+					else if (subcommand.find("!") != std::string::npos)
+					{
+						std::regex re(R"(!(\d+))");
+						std::smatch match;
+
+						if (std::regex_match(subcommand, match, re))
+						{
+							int number = std::stoi(match[1]);
+							bool result = !static_cast<bool>(number);
+							std::cout << result ;
+						}
+						else
+						{
+							// Робот обижается
+						}
+					}
+					else if ((subcommand.find("eq") != std::string::npos) ||
+							(subcommand.find("lt") != std::string::npos) ||
+							(subcommand.find("gt") != std::string::npos) ||
+							(subcommand.find("lte") != std::string::npos) ||
+							(subcommand.find("gte") != std::string::npos))
+					{ // работает только с одномерными константами
+						std::regex re(R"((eq|lt|gt|lte|gte)\((\d+)\))");
+						std::smatch match;
+
+						if (std::regex_match(subcommand, match, re))
+						{
+							std::string op = match[1];
+							int value = std::stoi(match[2]);
+							std::vector<int> data {value};
+							std::cout << "Operator: " << op << std::endl;
+							std::cout << "Value: " << value << std::endl;
+							
+							int compare = cmpZero(op, data);
+							if (compare == -1)
+							{
+								// Робот обижается
+							}
+							else
+							{
+								std::cout << compare;
+							}
+						}
+						else
+						{
+							std::cout << "Invalid input format" << std::endl;
+						}
+					}
 					else if (subcommand.find('=') != std::string::npos)
 					{
 						std::regex assignRegex(R"((([a-zA-Z_][a-zA-Z0-9_]*)(\[([0-9]+(\s*,\s*[0-9]+)*)\])?(\s*)=((\s*)(.+))))");
