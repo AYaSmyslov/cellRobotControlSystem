@@ -16,14 +16,7 @@ std::string getSize(const std::string &a_cmd, const std::vector<Variable> &a_lit
 
 std::string resize(const std::string &a_cmd, std::vector<Variable> &a_variables); // Изменить размерность
 
-// TODO: ПЕРЕНЕСТИ В Expression
-template <typename Predicate>
-bool check_majority(const std::vector<int>& data, Predicate pred);
 
-int cmpZero(const std::string &a_op, const std::vector<int>& a_data); // TODO: ПЕРЕНЕСТИ В Expression
-
-std::vector<int> parseNumbers(const std::string& input); // TODO: ПЕРЕНЕСТИ В Expression
-bool most(const std::vector<int>& numbers); // TODO: ПЕРЕНЕСТИ В Expression
 
 // print.cpp
 int getArrayElement(const std::vector<int> &indices, Variable &literal);

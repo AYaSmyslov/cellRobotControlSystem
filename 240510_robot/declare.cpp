@@ -153,60 +153,7 @@ std::string resize(const std::string &a_cmd, std::vector<Variable> &a_variables)
 
 
 
-template <typename Predicate>
-bool check_majority(const std::vector<int>& data, Predicate pred)
-{
-    int count = std::count_if(data.begin(), data.end(), pred);
-    return count > data.size() / 2;
-}
 
 
 
-/*
-eq, lt, gt, lte, gte
-operator(expression)
-*/
-int cmpZero(const std::string &a_op, const std::vector<int>& a_data)
-{
-	if (a_op == "eq")
-	{
-        return (int)check_majority(a_data, [](int x) { return x == 0; });
-    } else if (a_op == "lt") {
-        return (int)check_majority(a_data, [](int x) { return x < 0; });
-    } else if (a_op == "gt") {
-        return (int)check_majority(a_data, [](int x) { return x > 0; });
-    } else if (a_op == "lte") {
-        return (int)check_majority(a_data, [](int x) { return x <= 0; });
-    } else if (a_op == "gte") {
-        return (int)check_majority(a_data, [](int x) { return x >= 0; });
-    } else {
-        std::cerr << "Unknown operator: " << a_op << std::endl;
-        return -1;
-    }
-}
 
-
-
-std::vector<int> parseNumbers(const std::string& input) {
-    std::vector<int> numbers;
-    std::stringstream ss(input);
-    std::string item;
-    
-    while (std::getline(ss, item, ',')) {
-        numbers.push_back(std::stoi(item));
-    }
-    
-    return numbers;
-}
-
-
-
-bool most(const std::vector<int>& numbers) {
-    int count_non_zero = 0;
-    for (int number : numbers) {
-        if (number != 0) {
-            count_non_zero++;
-        }
-    }
-    return count_non_zero > numbers.size() / 2;
-}
