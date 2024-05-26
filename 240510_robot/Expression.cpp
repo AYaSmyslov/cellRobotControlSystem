@@ -16,7 +16,7 @@ Expression::Expression()
 	_lte_re(R"(^lte\((\d+)\)$)"), // рудимент
 	_gte_re(R"(^gte\((\d+)\)$)"), // рудимент
 	_cmpZero_re(R"(^(eq|lt|gt|lte|gte)\((\d+)\)$)"), // [0: "fullstr", 1: "operator name", 2: "const"]
-	_op_re(R"((most|!|eq|lt|gt|lte|gte)\((\d+)\))") // [0: "fullstr", 1: "operator name", 2: "const"]
+	_op_re(R"(((most|!|eq|lt|gt|lte|gte)\((\d+)\))|((\d+)\s*&&\s*(\d+)))") // [0: "fullstr", 1: "operator name", 2: "const"]
 {
 
 }
@@ -43,7 +43,7 @@ bool Expression::isExpression(const std::string &a_expr) const
 
 
 
-bool Expression::evaluate(std::string &a_expr, const std::vector<Variable> &a_variables)
+bool Expression::evaluate(std::string &a_expr, std::vector<Variable> &a_variables)
 {
 	_variables = a_variables;
 	std::smatch match;
@@ -52,10 +52,28 @@ bool Expression::evaluate(std::string &a_expr, const std::vector<Variable> &a_va
 	{
 		std::string expAssign = match[1];
 		std::string expNoAssign = match[5];
-		if (evaluate(expNoAssign, a_variables)) // не очень хорошечно что тут сетварится
+		if (evaluate(expNoAssign, a_variables))
 		{
 			std::cout << "Будет присвоено: " << expNoAssign << std:: endl; // dbg
-			// присваивание??
+
+            Parser parser(expNoAssign); 
+            double result = parser.parse(); // Вычислить арифметическое выражение
+
+            std::cout << "Посчитано: " << result << std::endl;
+
+            Variable tmp2;
+            if (findVariable(expAssign, a_variables, tmp2))
+            {
+                auto it = std::find_if(a_variables.begin(), a_variables.end(), [&](const Variable &var)
+                                        {
+                                            return var.getName() == tmp2.getName();
+                                        });
+                if (it != a_variables.end())
+                {
+                    it->setValue({int(result)}, {1});
+                }
+            }
+
 			return true;
 		}
 	}
@@ -135,7 +153,7 @@ int Expression::cmpZero(const std::string &a_op, const std::vector<int>& a_data)
 }
 
 
-
+// Заменить все переменные на их значения
 bool Expression::_replaceVarToConst(std::string &a_expr)
 {
 	std::string varParsedExpr;
@@ -168,7 +186,7 @@ bool Expression::_replaceVarToConst(std::string &a_expr)
 }
 
 
-
+// Заменить все операторы на их значения
 bool Expression::_parseOp(std::string &a_expr)
 {
 	std::smatch match;
@@ -178,17 +196,14 @@ bool Expression::_parseOp(std::string &a_expr)
 	{
 		op = match.str();
 		if (!_executeOp(op)) {return false;}
-		// if(!_parseOp(temp)) {return false;}
-		a_expr.replace(match.position(), match.str().length(), op);
-
-		temp = match.suffix().str();
+        a_expr.replace(match.position(), match.length(), op);
+		temp = a_expr;
 	}
-	// a_expr = temp;
 	return true;
 }
 
 
-
+// Вызов оператора
 bool Expression::_executeOp(std::string &a_expr)
 {
 	std::smatch match;
@@ -217,6 +232,7 @@ bool Expression::_executeOp(std::string &a_expr)
 	return false;
 }
 
+// Проверить является ли слово служебным 
 bool Expression::_isReservedWord(const std::string &a_word)
 {
 	return std::find(_ops.begin(), _ops.end(), a_word) != _ops.end();
