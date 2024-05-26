@@ -26,7 +26,33 @@ void interpretCommand(const std::string &command, Robot &robot, Maze &maze)
 	// ... реализация ...
 }
 
+std::string extractBetweenWords(const std::string& str, const std::string& word1, const std::string& word2) 
+{
+    auto pos1 = str.find(word1);
+    auto pos2 = str.find(word2);
+    if (pos1 != std::string::npos && pos2 != std::string::npos && pos2 > pos1)
+	{
+        return str.substr(pos1 + word1.length(), pos2 - pos1 - word1.length());
+    }
+    return "";
+}
 
+
+std::vector<int> strToVector(std::string a_str)
+{
+	std::vector<int> res;
+	a_str.erase(std::remove(a_str.begin(), a_str.end(), '['), a_str.end());
+	a_str.erase(std::remove(a_str.begin(), a_str.end(), ']'), a_str.end());
+	a_str.erase(std::remove(a_str.begin(), a_str.end(), ' '), a_str.end());
+
+	// Разбиваем строку на отдельные числа
+	std::istringstream ss(a_str);
+	std::string token;
+	while (std::getline(ss, token, ',')) {
+		res.push_back(std::stoi(token));
+	}
+	return res;
+}
 
 int main(int argc, char **argv)
 {
@@ -65,6 +91,7 @@ int main(int argc, char **argv)
 			while ((pos = command.find(delimiter)) != std::string::npos)
 			{
 				std::string subcommand = command.substr(0, pos);
+				std::cout << "подкоманда: " << subcommand << std::endl;
 				if (!subcommand.empty())
 				{
 					if (subcommand.find("digit") != std::string::npos || subcommand.find("logic") != std::string::npos)
@@ -107,11 +134,54 @@ int main(int argc, char **argv)
 
 						std::cout << printVar(subcommand, variables);
 					}
+					
+					if (subcommand.find("for") != std::string::npos && subcommand.find("stop") != std::string::npos && subcommand.find("step") != std::string::npos) 
+					{
+						std::vector<std::string> params;
+						params.push_back(extractBetweenWords(subcommand, "for", "stop"));
+						params.push_back(extractBetweenWords(subcommand, "stop", "step"));
+						params.push_back(extractBetweenWords(subcommand, "step", "{"));
+
+						for (int i=0; i < params.size(); i++)
+						{
+							if (std::regex_search(params[i].cbegin(), params[i].cend(), expr.variable_re))
+							{
+								expr.replaceVarToConst(params[i], variables);
+							}
+						}
+
+						std::vector<int> counter = strToVector(params[0]);
+						std::vector<int> boundary = strToVector(params[1]);
+						std::vector<int> step = strToVector(params[2]);
+
+						// выполнение цикла
+						for (int i=0; i < counter.size(); i++)
+						{   
+							if (step[i] > 0)
+							{
+								while (counter[i] < boundary[i]) {
+									std::cout << i << " ";
+									counter[i] += step[i];
+								}
+							}
+							else
+							{
+								while (counter[i] > boundary[i]) {
+									std::cout << i << " ";
+									counter[i] += step[i];
+								}
+							}
+							
+							std::cout << std::endl;
+						}
+						
+
+						std::cout << params[0] << '\t' << params[1] << '\t' << params[2] << std::endl;
+					}
 					else if (expr.isExpression(subcommand))
 					{
 						expr.evaluate(subcommand, variables);
 					}
-
 					else
 					{
 						std::regex assignRegex(R"((([a-zA-Z_][a-zA-Z0-9_]*)(\[([0-9]+(\s*,\s*[0-9]+)*)\])?))");
