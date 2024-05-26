@@ -41,6 +41,7 @@ private:
 	std::regex _variable_re;
 	std::regex _cmpZero_re;
 	std::regex _op_re;
+    std::regex _arith_re;
 
 	std::vector<Variable> _variables;
 	std::string _expr;

@@ -16,7 +16,10 @@ Expression::Expression()
 	_lte_re(R"(^lte\((\d+)\)$)"), // рудимент
 	_gte_re(R"(^gte\((\d+)\)$)"), // рудимент
 	_cmpZero_re(R"(^(eq|lt|gt|lte|gte)\((\d+)\)$)"), // [0: "fullstr", 1: "operator name", 2: "const"]
-	_op_re(R"(((most|!|eq|lt|gt|lte|gte)\((\d+)\))|((\d+)\s*&&\s*(\d+)))") // [0: "fullstr", 1: "operator name", 2: "const"]
+	_op_re(R"(((most|!|eq|lt|gt|lte|gte)\((\d+)\))|((\d+)\s*&&\s*(\d+)))"), // [0: "fullstr", 1: "operator name", 2: "const"]
+    // _arith_re(R"(\([-+\/*0-9()]*\))")
+    _arith_re(R"(\([-+\/*0-9()]*\))")
+
 {
 
 }
@@ -189,15 +192,30 @@ bool Expression::_replaceVarToConst(std::string &a_expr)
 // Заменить все операторы на их значения
 bool Expression::_parseOp(std::string &a_expr)
 {
-	std::smatch match;
+	std::smatch match, matchA;
 	std::string temp = a_expr;
 	std::string op;
-	while (std::regex_search(temp, match, _op_re))
+	while (std::regex_search(temp, match, _op_re) || std::regex_search(temp, matchA, _arith_re))
 	{
-		op = match.str();
-		if (!_executeOp(op)) {return false;}
-        a_expr.replace(match.position(), match.length(), op);
-		temp = a_expr;
+        if (matchA.size() > 0 && match.size() == 0 )
+        {
+            std::string arithmetic = matchA.str();
+            
+
+            Parser parser(arithmetic); 
+            double result = parser.parse();
+            int intRes = static_cast<int>(result);
+            
+            a_expr.replace(matchA.position(), matchA.length(), "("+std::to_string(intRes)+")");
+            temp = a_expr;
+        }
+        else
+        {
+            op = match.str();
+            if (!_executeOp(op)) {return false;}
+            a_expr.replace(match.position(), match.length(), op);
+            temp = a_expr;
+        }
 	}
 	return true;
 }
