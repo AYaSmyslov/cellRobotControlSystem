@@ -40,7 +40,7 @@ bool Expression::isExpression(const std::string &a_expr) const
 
 
 
-bool Expression::evaluate(std::string &a_expr, std::vector<Variable> &a_variables)
+bool Expression::evaluate(std::string &a_expr, std::vector<Variable> &a_variables, int &a_result)
 {
 	_variables = a_variables;
 	std::smatch match;
@@ -49,14 +49,10 @@ bool Expression::evaluate(std::string &a_expr, std::vector<Variable> &a_variable
 	{
 		std::string expAssign = match[1];
 		std::string expNoAssign = match[5];
-		if (evaluate(expNoAssign, a_variables))
+		if (evaluate(expNoAssign, a_variables, a_result))
 		{
 			std::cout << "Будет присвоено: " << expNoAssign << std:: endl; // dbg
-
-            Parser parser(expNoAssign); 
-            double result = parser.parse(); // Вычислить арифметическое выражение
-
-            std::cout << "Посчитано: " << result << std::endl;
+            std::cout << "Посчитано: " << a_result << std::endl;
 
             Variable tmp2;
             if (findVariable(expAssign, a_variables, tmp2))
@@ -67,7 +63,7 @@ bool Expression::evaluate(std::string &a_expr, std::vector<Variable> &a_variable
                                         });
                 if (it != a_variables.end())
                 {
-                    it->setValue({int(result)}, {1});
+                    it->setValue({int(a_result)}, {1});
                 }
             }
 
@@ -83,8 +79,9 @@ bool Expression::evaluate(std::string &a_expr, std::vector<Variable> &a_variable
 
 	// Вычисления
 	_parseOp(a_expr);
-
-
+    Parser parser(a_expr); 
+    double result = parser.parse(); // Вычислить арифметическое выражение
+    a_result = int(result);
 
 	return true;
 }

@@ -38,6 +38,15 @@ std::string extractBetweenWords(const std::string& str, const std::string& word1
 }
 
 
+std::string extractFromWord(const std::string& str, const std::string& word)
+{
+    auto pos = str.find(word);
+    if (pos != std::string::npos) {
+        return str.substr(pos + word.length());
+    }
+    return "";
+}
+
 std::vector<int> strToVector(std::string a_str)
 {
 	std::vector<int> res;
@@ -134,8 +143,56 @@ int main(int argc, char **argv)
 
 						std::cout << printVar(subcommand, variables);
 					}
-					
-					if (subcommand.find("for") != std::string::npos && subcommand.find("stop") != std::string::npos && subcommand.find("step") != std::string::npos) 
+					else if (subcommand.find("check") != std::string::npos && subcommand.find("then") != std::string::npos) 
+					{
+						
+						std::vector<std::string> params;
+						bool haveElse = false;
+						params.push_back(extractBetweenWords(subcommand, "check", "then"));
+						params.push_back(extractBetweenWords(subcommand, "then {", "}"));
+						if (subcommand.find("overwise") != std::string::npos)
+						{
+							std::string tmp = extractFromWord(subcommand, "overwise {");
+							tmp.pop_back();
+							params.push_back(tmp);
+							haveElse = true;
+						}
+						int res;
+						if (expr.isExpression(params[0]))
+						{
+							expr.evaluate(params[0], variables, res);
+						}
+						else
+						{
+							params[0].erase(std::remove(params[0].begin(), params[0].end(), ' '), params[0].end());
+							std::regex assignRegex(R"((([a-zA-Z_][a-zA-Z0-9_]*)(\[([0-9]+(\s*,\s*[0-9]+)*)\])?))");
+							std::regex integerPattern(R"(^-?\d+$)");
+							std::smatch match;
+							if (std::regex_match(params[0], match, assignRegex))
+							{
+								res = std::stoi(printVar(params[0], variables));
+							}
+							if (std::regex_match(params[0], match, integerPattern))
+							{
+								res = std::stoi(params[0]);
+							}
+						}
+
+						if (res > 0)
+						{
+							std::cout << "Истина" << res << std::endl;
+							std::cout << params[1] << std::endl;
+						}
+						else
+						{
+							std::cout << "Ложь" << res << std::endl;
+							if (haveElse)
+							{
+							std::cout << params[2] << std::endl;
+							}
+						}
+					}
+					else if (subcommand.find("for") != std::string::npos && subcommand.find("stop") != std::string::npos && subcommand.find("step") != std::string::npos) 
 					{
 						std::vector<std::string> params;
 						params.push_back(extractBetweenWords(subcommand, "for", "stop"));
@@ -180,7 +237,8 @@ int main(int argc, char **argv)
 					}
 					else if (expr.isExpression(subcommand))
 					{
-						expr.evaluate(subcommand, variables);
+						int res;
+						expr.evaluate(subcommand, variables, res);
 					}
 					else
 					{

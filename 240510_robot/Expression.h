@@ -15,7 +15,7 @@ public:
 	~Expression();
 
 	bool isExpression(const std::string& a_expr) const;
-	bool evaluate(std::string &a_expr, std::vector<Variable> &a_variables);
+	bool evaluate(std::string &a_expr, std::vector<Variable> &a_variables, int &a_result);
 
 	std::vector<int> parseNumbers(const std::string& input);
 	bool most(const std::vector<int>& numbers);
