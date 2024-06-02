@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <map>
 
 #include "Variable.h"
 #include "commands.h"
@@ -26,26 +27,7 @@ void interpretCommand(const std::string &command, Robot &robot, Maze &maze)
 	// ... реализация ...
 }
 
-std::string extractBetweenWords(const std::string& str, const std::string& word1, const std::string& word2) 
-{
-    auto pos1 = str.find(word1);
-    auto pos2 = str.find(word2);
-    if (pos1 != std::string::npos && pos2 != std::string::npos && pos2 > pos1)
-	{
-        return str.substr(pos1 + word1.length(), pos2 - pos1 - word1.length());
-    }
-    return "";
-}
 
-
-std::string extractFromWord(const std::string& str, const std::string& word)
-{
-    auto pos = str.find(word);
-    if (pos != std::string::npos) {
-        return str.substr(pos + word.length());
-    }
-    return "";
-}
 
 std::vector<int> strToVector(std::string a_str)
 {
@@ -80,6 +62,12 @@ int main(int argc, char **argv)
 	Robot robot;
 	Maze maze;
 
+	std::map<std::string, std::string> namespaces = 
+	{
+		{"main", "mustBeObject"}, 
+		{"tmp", "mustBeObject"}
+	};
+
 	std::string command;
 	std::vector<Variable> variables;
 
@@ -93,165 +81,173 @@ int main(int argc, char **argv)
 		{
 			break;
 		}
-		if (command.find(';') != std::string::npos)
+
+		std::vector<std::string> subcommands = split(command);
+
+		for (auto &subcommand : subcommands)
 		{
-			std::size_t pos = 0;
-			std::string delimiter = ";";
-			while ((pos = command.find(delimiter)) != std::string::npos)
+			// std::string subcommand = command.substr(0, pos);
+			std::cout << "подкоманда: " << subcommand << std::endl;
+			if (!subcommand.empty())
 			{
-				std::string subcommand = command.substr(0, pos);
-				std::cout << "подкоманда: " << subcommand << std::endl;
-				if (!subcommand.empty())
+				if (subcommand.find("routing") != std::string::npos)
 				{
-					if (subcommand.find("digit") != std::string::npos || subcommand.find("logic") != std::string::npos)
+					std::string funType = extractToWord(subcommand, "routing");
+					std::string funName = extractBetweenWords(subcommand, "routing", "(");
+					std::string funParams = extractBetweenWords(subcommand, "(", ")");
+					std::string funBody = extractBetweenWords(subcommand, "{", "}");
+					std::cout << funType << std::endl;
+					std::cout << funName << std::endl;
+					std::cout << funParams << std::endl;
+					std::cout << funBody << std::endl;
+				}
+				else if (subcommand.find("digit") != std::string::npos || subcommand.find("logic") != std::string::npos)
+				{
+					Variable tmp(parseVariableDeclaration(subcommand)), tmp2;
+					if (findVariable(tmp.getName(), variables, tmp2))
 					{
-						Variable tmp(parseVariableDeclaration(subcommand)), tmp2;
-						if (findVariable(tmp.getName(), variables, tmp2))
+						auto it = std::find_if(variables.begin(), variables.end(), [&](const Variable &var)
+												{
+													return var.getName() == tmp2.getName();
+												});
+						if (it != variables.end())
 						{
-							auto it = std::find_if(variables.begin(), variables.end(), [&](const Variable &var)
-												   {
-													   return var.getName() == tmp2.getName();
-												   });
-							if (it != variables.end())
-							{
-								variables.erase(it);
-							}
-						}
-						variables.push_back(tmp);
-						variables.back().print();
-					}
-					else if (subcommand.find("resize") != std::string::npos)
-					{
-						std::cout << resize(subcommand, variables);
-					}
-					else if (subcommand.find("size") != std::string::npos)
-					{
-						std::cout << getSize(subcommand, variables);
-					}
-					else if (subcommand.find("print") != std::string::npos)
-					{
-
-						const std::string start = "print(";
-						const std::string end = ")";
-
-						if (subcommand.size() >= start.size() + end.size() &&
-							subcommand.substr(0, start.size()) == start &&
-							subcommand.substr(subcommand.size() - end.size(), end.size()) == end)
-						{
-							subcommand = subcommand.substr(start.size(), subcommand.size() - start.size() - end.size());
-						}
-
-						std::cout << printVar(subcommand, variables);
-					}
-					else if (subcommand.find("check") != std::string::npos && subcommand.find("then") != std::string::npos) 
-					{
-						
-						std::vector<std::string> params;
-						bool haveElse = false;
-						params.push_back(extractBetweenWords(subcommand, "check", "then"));
-						params.push_back(extractBetweenWords(subcommand, "then {", "}"));
-						if (subcommand.find("overwise") != std::string::npos)
-						{
-							std::string tmp = extractFromWord(subcommand, "overwise {");
-							tmp.pop_back();
-							params.push_back(tmp);
-							haveElse = true;
-						}
-						int res;
-						if (expr.isExpression(params[0]))
-						{
-							expr.evaluate(params[0], variables, res);
-						}
-						else
-						{
-							params[0].erase(std::remove(params[0].begin(), params[0].end(), ' '), params[0].end());
-							std::regex assignRegex(R"((([a-zA-Z_][a-zA-Z0-9_]*)(\[([0-9]+(\s*,\s*[0-9]+)*)\])?))");
-							std::regex integerPattern(R"(^-?\d+$)");
-							std::smatch match;
-							if (std::regex_match(params[0], match, assignRegex))
-							{
-								res = std::stoi(printVar(params[0], variables));
-							}
-							if (std::regex_match(params[0], match, integerPattern))
-							{
-								res = std::stoi(params[0]);
-							}
-						}
-
-						if (res > 0)
-						{
-							std::cout << "Истина" << res << std::endl;
-							std::cout << params[1] << std::endl;
-						}
-						else
-						{
-							std::cout << "Ложь" << res << std::endl;
-							if (haveElse)
-							{
-							std::cout << params[2] << std::endl;
-							}
+							variables.erase(it);
 						}
 					}
-					else if (subcommand.find("for") != std::string::npos && subcommand.find("stop") != std::string::npos && subcommand.find("step") != std::string::npos) 
+					variables.push_back(tmp);
+					variables.back().print();
+				}
+				else if (subcommand.find("resize") != std::string::npos)
+				{
+					std::cout << resize(subcommand, variables);
+				}
+				else if (subcommand.find("size") != std::string::npos)
+				{
+					std::cout << getSize(subcommand, variables);
+				}
+				else if (subcommand.find("print") != std::string::npos)
+				{
+
+					const std::string start = "print(";
+					const std::string end = ")";
+
+					if (subcommand.size() >= start.size() + end.size() &&
+						subcommand.substr(0, start.size()) == start &&
+						subcommand.substr(subcommand.size() - end.size(), end.size()) == end)
 					{
-						std::vector<std::string> params;
-						params.push_back(extractBetweenWords(subcommand, "for", "stop"));
-						params.push_back(extractBetweenWords(subcommand, "stop", "step"));
-						params.push_back(extractBetweenWords(subcommand, "step", "{"));
-
-						for (int i=0; i < params.size(); i++)
-						{
-							if (std::regex_search(params[i].cbegin(), params[i].cend(), expr.variable_re))
-							{
-								expr.replaceVarToConst(params[i], variables);
-							}
-						}
-
-						std::vector<int> counter = strToVector(params[0]);
-						std::vector<int> boundary = strToVector(params[1]);
-						std::vector<int> step = strToVector(params[2]);
-
-						// выполнение цикла
-						for (int i=0; i < counter.size(); i++)
-						{   
-							if (step[i] > 0)
-							{
-								while (counter[i] < boundary[i]) {
-									std::cout << i << " ";
-									counter[i] += step[i];
-								}
-							}
-							else
-							{
-								while (counter[i] > boundary[i]) {
-									std::cout << i << " ";
-									counter[i] += step[i];
-								}
-							}
-							
-							std::cout << std::endl;
-						}
-						
-
-						std::cout << params[0] << '\t' << params[1] << '\t' << params[2] << std::endl;
+						subcommand = subcommand.substr(start.size(), subcommand.size() - start.size() - end.size());
 					}
-					else if (expr.isExpression(subcommand))
+
+					std::cout << printVar(subcommand, variables);
+				}
+				else if (subcommand.find("check") != std::string::npos && subcommand.find("then") != std::string::npos) 
+				{
+					
+					std::vector<std::string> params;
+					bool haveElse = false;
+					params.push_back(extractBetweenWords(subcommand, "check", "then"));
+					params.push_back(extractBetweenWords(subcommand, "then {", "}"));
+					if (subcommand.find("overwise") != std::string::npos)
 					{
-						int res;
-						expr.evaluate(subcommand, variables, res);
+						std::string tmp = extractFromWord(subcommand, "overwise {");
+						tmp.pop_back();
+						params.push_back(tmp);
+						haveElse = true;
+					}
+					int res;
+					if (expr.isExpression(params[0]))
+					{
+						expr.evaluate(params[0], variables, res);
 					}
 					else
 					{
+						params[0].erase(std::remove(params[0].begin(), params[0].end(), ' '), params[0].end());
 						std::regex assignRegex(R"((([a-zA-Z_][a-zA-Z0-9_]*)(\[([0-9]+(\s*,\s*[0-9]+)*)\])?))");
+						std::regex integerPattern(R"(^-?\d+$)");
 						std::smatch match;
-						if (std::regex_match(subcommand, match, assignRegex))
+						if (std::regex_match(params[0], match, assignRegex))
 						{
-							std::cout << printVar(subcommand, variables);
+							res = std::stoi(printVar(params[0], variables));
 						}
-						interpretCommand(subcommand, robot, maze);
+						if (std::regex_match(params[0], match, integerPattern))
+						{
+							res = std::stoi(params[0]);
+						}
+					}
+
+					if (res > 0)
+					{
+						std::cout << "Истина" << res << std::endl;
+						std::cout << params[1] << std::endl;
+					}
+					else
+					{
+						std::cout << "Ложь" << res << std::endl;
+						if (haveElse)
+						{
+						std::cout << params[2] << std::endl;
+						}
 					}
 				}
-				command.erase(0, pos + delimiter.length());
+				else if (subcommand.find("for") != std::string::npos && subcommand.find("stop") != std::string::npos && subcommand.find("step") != std::string::npos) 
+				{
+					std::vector<std::string> params;
+					params.push_back(extractBetweenWords(subcommand, "for", "stop"));
+					params.push_back(extractBetweenWords(subcommand, "stop", "step"));
+					params.push_back(extractBetweenWords(subcommand, "step", "{"));
+
+					for (int i=0; i < params.size(); i++)
+					{
+						if (std::regex_search(params[i].cbegin(), params[i].cend(), expr.variable_re))
+						{
+							expr.replaceVarToConst(params[i], variables);
+						}
+					}
+
+					std::vector<int> counter = strToVector(params[0]);
+					std::vector<int> boundary = strToVector(params[1]);
+					std::vector<int> step = strToVector(params[2]);
+
+					// выполнение цикла
+					for (int i=0; i < counter.size(); i++)
+					{   
+						if (step[i] > 0)
+						{
+							while (counter[i] < boundary[i]) {
+								std::cout << i << " ";
+								counter[i] += step[i];
+							}
+						}
+						else
+						{
+							while (counter[i] > boundary[i]) {
+								std::cout << i << " ";
+								counter[i] += step[i];
+							}
+						}
+						
+						std::cout << std::endl;
+					}
+					
+
+					std::cout << params[0] << '\t' << params[1] << '\t' << params[2] << std::endl;
+				}
+				else if (expr.isExpression(subcommand))
+				{
+					int res;
+					expr.evaluate(subcommand, variables, res);
+				}
+				else
+				{
+					std::regex assignRegex(R"((([a-zA-Z_][a-zA-Z0-9_]*)(\[([0-9]+(\s*,\s*[0-9]+)*)\])?))");
+					std::smatch match;
+					if (std::regex_match(subcommand, match, assignRegex))
+					{
+						std::cout << printVar(subcommand, variables);
+					}
+					interpretCommand(subcommand, robot, maze);
+				}
 			}
 		}
 

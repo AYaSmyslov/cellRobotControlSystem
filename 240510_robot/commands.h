@@ -8,6 +8,10 @@
 
 // tools.cpp - НЕ КОМАНДЫ, эти функции используются командами ниже
 bool findVariable(const std::string &varName, const std::vector<Variable> &a_literals, Variable &foundVariable);
+std::vector<std::string> split(const std::string& str);
+std::string extractBetweenWords(const std::string& str, const std::string& word1, const std::string& word2);
+std::string extractFromWord(const std::string& str, const std::string& word);
+std::string extractToWord(const std::string& str, const std::string& word);
 
 // declare.cpp
 Variable parseVariableDeclaration(const std::string &a_declaration); // Объявление переменной

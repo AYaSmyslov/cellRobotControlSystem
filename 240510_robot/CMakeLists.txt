@@ -8,6 +8,7 @@ set(SOURCES main.cpp
 	Variable.cpp
 	Parser.cpp
 	Expression.cpp
+	Func.cpp
 )
 
 set(HEADERS
@@ -16,6 +17,7 @@ set(HEADERS
 	commands.h
 	Robot.h
 	Expression.h
+	Func.h
 )
 
 
