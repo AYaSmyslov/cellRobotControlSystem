@@ -9,6 +9,7 @@
 #include "Variable.h"
 #include "commands.h"
 #include "Robot.h"
+#include "Func.h"
 
 
 
@@ -29,22 +30,6 @@ void interpretCommand(const std::string &command, Robot &robot, Maze &maze)
 
 
 
-std::vector<int> strToVector(std::string a_str)
-{
-	std::vector<int> res;
-	a_str.erase(std::remove(a_str.begin(), a_str.end(), '['), a_str.end());
-	a_str.erase(std::remove(a_str.begin(), a_str.end(), ']'), a_str.end());
-	a_str.erase(std::remove(a_str.begin(), a_str.end(), ' '), a_str.end());
-
-	// Разбиваем строку на отдельные числа
-	std::istringstream ss(a_str);
-	std::string token;
-	while (std::getline(ss, token, ',')) {
-		res.push_back(std::stoi(token));
-	}
-	return res;
-}
-
 int main(int argc, char **argv)
 {
 	for (int i = 1; i < argc; ++i)
@@ -62,10 +47,10 @@ int main(int argc, char **argv)
 	Robot robot;
 	Maze maze;
 
-	std::map<std::string, std::string> namespaces = 
+	std::map<std::string, Func> namespaces = 
 	{
-		{"main", "mustBeObject"}, 
-		{"tmp", "mustBeObject"}
+		{"main", Func()}, 
+		{"tmp", Func()}
 	};
 
 	std::string command;
@@ -87,7 +72,7 @@ int main(int argc, char **argv)
 		for (auto &subcommand : subcommands)
 		{
 			// std::string subcommand = command.substr(0, pos);
-			std::cout << "подкоманда: " << subcommand << std::endl;
+			// std::cout << "подкоманда: " << subcommand << std::endl;
 			if (!subcommand.empty())
 			{
 				if (subcommand.find("routing") != std::string::npos)
@@ -100,6 +85,16 @@ int main(int argc, char **argv)
 					std::cout << funName << std::endl;
 					std::cout << funParams << std::endl;
 					std::cout << funBody << std::endl;
+					namespaces[funName] = Func(funType, funName, funParams, funBody);
+				}
+				else if (subcommand.find("perform") != std::string::npos)
+				{
+					std::cout << "вызов" << std::endl;
+					std::string funName = extractBetweenWords(subcommand, "perform", "(");
+					std::string funParams = extractBetweenWords(subcommand, "(", ")");
+					std::cout << funName << std::endl;
+					std::cout << funParams << std::endl;
+					namespaces[funName].call(funParams);
 				}
 				else if (subcommand.find("digit") != std::string::npos || subcommand.find("logic") != std::string::npos)
 				{

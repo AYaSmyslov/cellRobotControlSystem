@@ -18,6 +18,19 @@ bool findVariable(const std::string& varName, const std::vector<Variable>& a_lit
 
 
 
+std::string removeSpaces(const std::string& str)
+{
+    std::string result;
+    for (char c : str) {
+        if (c != ' ') {
+            result += c;
+        }
+    }
+    return result;
+}
+
+
+
 std::vector<std::string> split(const std::string& str)
 {
     std::vector<std::string> result;
@@ -88,4 +101,22 @@ std::string extractToWord(const std::string& str, const std::string& word)
         return str.substr(0, pos);
     }
     return "";
+}
+
+
+
+std::vector<int> strToVector(std::string a_str)
+{
+	std::vector<int> res;
+	a_str.erase(std::remove(a_str.begin(), a_str.end(), '['), a_str.end());
+	a_str.erase(std::remove(a_str.begin(), a_str.end(), ']'), a_str.end());
+	a_str.erase(std::remove(a_str.begin(), a_str.end(), ' '), a_str.end());
+
+	// Разбиваем строку на отдельные числа
+	std::istringstream ss(a_str);
+	std::string token;
+	while (std::getline(ss, token, ',')) {
+		res.push_back(std::stoi(token));
+	}
+	return res;
 }

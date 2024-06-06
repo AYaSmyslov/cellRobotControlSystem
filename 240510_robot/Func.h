@@ -3,16 +3,29 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <regex>
+#include <algorithm>
+#include <stdio.h>
+#include <string.h>
+#include <vector>
+
+#include "Variable.h"
+#include "commands.h"
 
 class Func
 {
 public:
-    std::string type;
-    std::string name;
-    std::vector<std::string> parameters;
-    std::vector<std::string> body;
+    std::string _type;
+    std::string _name;
+    std::vector<std::string> _parameters;
+    std::vector<Variable> _variables;
+    // std::vector<std::string> body;
+    std::string _body;
 
-    Func(const std::string& funcType, const std::string& funcName, const std::vector<std::string>& params, const std::vector<std::string>& funcBody);
 
-    void call(const std::vector<std::string>& args) const;
+    Func();
+
+    Func(const std::string &a_funcType, const std::string& a_funcName, const std::string &a_params, const std::string &a_funcBody);
+
+    void call(const std::string &args);
 };
