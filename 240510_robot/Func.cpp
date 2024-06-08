@@ -9,42 +9,75 @@ Func::Func(const std::string &a_funcType, const std::string& a_funcName, const s
 {
     std::string params = removeSpaces(a_params);
     std::string param;
-    for (char c : params)
+    if (params != "")
     {
-        if (c == ',')
+        for (char c : params)
         {
-            if (!param.empty())
+            if (c == ',')
             {
-                Variable tmp("digit", param, "[1]", "0");
-                _variables.push_back(tmp);
-                _parameters.push_back(param);
-                param.clear();
+                if (!param.empty())
+                {
+                    // Variable tmp("digit", param, "[1]", "0");
+                    // _variables.push_back(tmp);
+                    _parameters.push_back(param);
+                    param.clear();
+                }
+            } else {
+                param += c;
             }
-        } else {
-            param += c;
+            
         }
+        _parameters.push_back(param);
     }
-    
 }
 
 
 
-void Func::call(const std::string &args)
+bool Func::call(const std::string &args, int &a_result)
 {
 
 // TODO: добавить учет параметров 
     Expression expr;
+
+    std::string argsConsts = removeSpaces(args);
+    std::string arg;
+    std::vector<std::string> constValues;
+
+    if (argsConsts != "")
+    {
+        for (char c : argsConsts)
+        {
+            if (c == ',')
+            {
+                if (!arg.empty())
+                {
+                    constValues.push_back(arg);
+                    arg.clear();
+                }
+            } else {
+                arg += c;
+            }
+        }
+        constValues.push_back(arg);
+    }
+    std::string paramInit;
+    for (int i = 0; i < _parameters.size(); i++)
+    {
+        paramInit += "digit " + _parameters[i] + "=" + constValues[i] + ";";
+    }
+    _body = paramInit + _body;
     std::vector<std::string> subcommands = split(_body);
 
-    for (auto &subcommand : subcommands)
+    // for (auto &subcommands[commInd] : subcommands)
+    for (int commInd=0; commInd < subcommands.size(); commInd++)
     {
-        // std::string subcommand = command.substr(0, pos);
-        // std::cout << "подкоманда: " << subcommand << std::endl;
-        if (!subcommand.empty())
+        // std::string subcommands[commInd] = command.substr(0, pos);
+        // std::cout << "подкоманда: " << subcommands[commInd] << std::endl;
+        if (!subcommands[commInd].empty())
         {
-            if (subcommand.find("digit") != std::string::npos || subcommand.find("logic") != std::string::npos)
+            if (subcommands[commInd].find("digit") != std::string::npos || subcommands[commInd].find("logic") != std::string::npos)
             {
-                Variable tmp(parseVariableDeclaration(subcommand)), tmp2;
+                Variable tmp(parseVariableDeclaration(subcommands[commInd])), tmp2;
                 if (findVariable(tmp.getName(), _variables, tmp2))
                 {
                     auto it = std::find_if(_variables.begin(), _variables.end(), [&](const Variable &var)
@@ -59,54 +92,57 @@ void Func::call(const std::string &args)
                 _variables.push_back(tmp);
                 _variables.back().print();
             }
-            else if (subcommand.find("resize") != std::string::npos)
+            else if (subcommands[commInd].find("resize") != std::string::npos)
             {
-                std::cout << resize(subcommand, _variables);
+                std::cout << resize(subcommands[commInd], _variables);
             }
-            else if (subcommand.find("size") != std::string::npos)
+            else if (subcommands[commInd].find("size") != std::string::npos)
             {
-                std::cout << getSize(subcommand, _variables);
+                std::cout << getSize(subcommands[commInd], _variables);
             }
-            else if (subcommand.find("return") != std::string::npos)
+            else if (subcommands[commInd].find("return") != std::string::npos)
             {
-
-                // const std::string start = "return ";
-                // // const std::string end = ")";
-
-                // if (subcommand.size() >= start.size() &&
-                //     subcommand.substr(0, start.size()) == start &&
-                //     subcommand.substr(subcommand.size() - end.size(), end.size()) == end)
-                // {
-                //     subcommand = subcommand.substr(start.size(), subcommand.size() - start.size() - end.size());
-                // }
-
-                std::cout << printVar(subcommand, _variables);
+                std::string ret = extractFromWord(subcommands[commInd], "return");
+                ret = removeSpaces(ret);
+                std::regex assignRegex(R"((([a-zA-Z_][a-zA-Z0-9_]*)(\[([0-9]+(\s*,\s*[0-9]+)*)\])?))");
+                std::regex integerPattern(R"(^-?\d+$)");
+                std::smatch match;
+                if (std::regex_match(ret, match, assignRegex))
+                {
+                    a_result = std::stoi(printVar(ret, _variables));
+                }
+                if (std::regex_match(ret, match, integerPattern))
+                {
+                    a_result = std::stoi(ret);
+                }
+                return true;
+                std::cout << printVar(subcommands[commInd], _variables);
             }
-            else if (subcommand.find("print") != std::string::npos)
+            else if (subcommands[commInd].find("print") != std::string::npos)
             {
 
                 const std::string start = "print(";
                 const std::string end = ")";
 
-                if (subcommand.size() >= start.size() + end.size() &&
-                    subcommand.substr(0, start.size()) == start &&
-                    subcommand.substr(subcommand.size() - end.size(), end.size()) == end)
+                if (subcommands[commInd].size() >= start.size() + end.size() &&
+                    subcommands[commInd].substr(0, start.size()) == start &&
+                    subcommands[commInd].substr(subcommands[commInd].size() - end.size(), end.size()) == end)
                 {
-                    subcommand = subcommand.substr(start.size(), subcommand.size() - start.size() - end.size());
+                    subcommands[commInd] = subcommands[commInd].substr(start.size(), subcommands[commInd].size() - start.size() - end.size());
                 }
 
-                std::cout << printVar(subcommand, _variables);
+                std::cout << printVar(subcommands[commInd], _variables);
             }
-            else if (subcommand.find("check") != std::string::npos && subcommand.find("then") != std::string::npos) 
+            else if (subcommands[commInd].find("check") != std::string::npos && subcommands[commInd].find("then") != std::string::npos) 
             {
                 
                 std::vector<std::string> params;
                 bool haveElse = false;
-                params.push_back(extractBetweenWords(subcommand, "check", "then"));
-                params.push_back(extractBetweenWords(subcommand, "then {", "}"));
-                if (subcommand.find("overwise") != std::string::npos)
+                params.push_back(extractBetweenWords(subcommands[commInd], "check", "then"));
+                params.push_back(extractBetweenWords(subcommands[commInd], "then {", "}"));
+                if (subcommands[commInd].find("overwise") != std::string::npos)
                 {
-                    std::string tmp = extractFromWord(subcommand, "overwise {");
+                    std::string tmp = extractFromWord(subcommands[commInd], "overwise {");
                     tmp.pop_back();
                     params.push_back(tmp);
                     haveElse = true;
@@ -132,25 +168,31 @@ void Func::call(const std::string &args)
                     }
                 }
 
-                if (res > 0)
-                {
-                    std::cout << params[1] << std::endl;
-                }
-                else
-                {
-                    if (haveElse)
-                    {
-                    std::cout << params[2] << std::endl;
-                    }
-                }
+                std::string loopedAlg = "";
+					if (res > 0)
+					{
+						loopedAlg+=params[1];
+					}
+					else
+					{
+						if (haveElse)
+						{
+							loopedAlg+=params[2];
+						}
+					}
+					std::vector<std::string> resAlg = split(loopedAlg);
+					for (auto oResAlg : resAlg)
+					{
+						subcommands.push_back(oResAlg);
+					}
             }
-            else if (subcommand.find("for") != std::string::npos && subcommand.find("stop") != std::string::npos && subcommand.find("step") != std::string::npos) 
+            else if (subcommands[commInd].find("for") != std::string::npos && subcommands[commInd].find("stop") != std::string::npos && subcommands[commInd].find("step") != std::string::npos) 
             {
                 std::vector<std::string> params;
-                params.push_back(extractBetweenWords(subcommand, "for", "stop"));
-                params.push_back(extractBetweenWords(subcommand, "stop", "step"));
-                params.push_back(extractBetweenWords(subcommand, "step", "{"));
-
+                params.push_back(extractBetweenWords(subcommands[commInd], "for", "stop"));
+                params.push_back(extractBetweenWords(subcommands[commInd], "stop", "step"));
+                params.push_back(extractBetweenWords(subcommands[commInd], "step", "{"));
+                std::string loopedAlg = "";
                 for (int i=0; i < params.size(); i++)
                 {
                     if (std::regex_search(params[i].cbegin(), params[i].cend(), expr.variable_re))
@@ -168,16 +210,20 @@ void Func::call(const std::string &args)
                 {   
                     if (step[i] > 0)
                     {
-                        while (counter[i] < boundary[i]) {
+                        while (counter[i] < boundary[i])
+                        {
                             std::cout << i << " ";
                             counter[i] += step[i];
+                            loopedAlg+=params[3];
                         }
                     }
                     else
                     {
-                        while (counter[i] > boundary[i]) {
+                        while (counter[i] > boundary[i])
+                        {
                             std::cout << i << " ";
                             counter[i] += step[i];
+                            loopedAlg+=params[3];
                         }
                     }
                     
@@ -185,22 +231,27 @@ void Func::call(const std::string &args)
                 }
                 
 
-                std::cout << params[0] << '\t' << params[1] << '\t' << params[2] << std::endl;
+                std::vector<std::string> resAlg = split(loopedAlg);
+                for (auto oResAlg : resAlg)
+                {
+                    subcommands.push_back(oResAlg);
+                }
             }
-            else if (expr.isExpression(subcommand))
+            else if (expr.isExpression(subcommands[commInd]))
             {
                 int res;
-                expr.evaluate(subcommand, _variables, res);
+                expr.evaluate(subcommands[commInd], _variables, res);
             }
             else
             {
                 std::regex assignRegex(R"((([a-zA-Z_][a-zA-Z0-9_]*)(\[([0-9]+(\s*,\s*[0-9]+)*)\])?))");
                 std::smatch match;
-                if (std::regex_match(subcommand, match, assignRegex))
+                if (std::regex_match(subcommands[commInd], match, assignRegex))
                 {
-                    std::cout << printVar(subcommand, _variables);
+                    std::cout << printVar(subcommands[commInd], _variables);
                 }
             }
         }
     }
+    return false;
 }

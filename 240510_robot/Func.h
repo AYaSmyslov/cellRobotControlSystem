@@ -27,5 +27,5 @@ public:
 
     Func(const std::string &a_funcType, const std::string& a_funcName, const std::string &a_params, const std::string &a_funcBody);
 
-    void call(const std::string &args);
+    bool call(const std::string &args, int &a_result);
 };
