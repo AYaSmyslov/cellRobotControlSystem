@@ -89,16 +89,19 @@ double Parser::parseFactor()
 }
 
 
-
 double Parser::parseNumber()
 {
 	skipWhitespace();
 	size_t startPos = pos;
+	if (pos < expr.length() && expr[pos] == '-')
+	{
+		++pos;
+	}
 	while (pos < expr.length() && (isdigit(expr[pos]) || expr[pos] == '.'))
 	{
 		++pos;
 	}
-	if (startPos == pos)
+	if (startPos == pos || (startPos + 1 == pos && expr[startPos] == '-'))
 	{
 		throw std::runtime_error("Expected number");
 	}

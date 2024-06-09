@@ -5,28 +5,14 @@
 #include <vector>
 #include <algorithm>
 #include <map>
-
 #include "Variable.h"
 #include "commands.h"
-#include "Robot.h"
 #include "Func.h"
 
+#include "Platform.h"
+#include "Robot.h"
 
-
-// Определение структуры лабиринта
-struct Maze
-{
-	std::vector<std::vector<int>> grid; // сетка лабиринта
-	// ... другие свойства и методы ...
-};
-
-
-
-// Функция для интерпретации команд
-void interpretCommand(const std::string &command, Robot &robot, Maze &maze)
-{
-	// ... реализация ...
-}
+#define COUNT_PLATFORM_LAYERS 4
 
 
 
@@ -45,7 +31,24 @@ int main(int argc, char **argv)
 	}
 
 	Robot robot;
-	Maze maze;
+	std::vector<Platform> platforms;
+
+	std::vector<Platform> directions = {
+        Platform(+1, -1,  0), Platform(+1,  0, -1), Platform( 0, +1, -1),
+        Platform(-1, +1,  0), Platform(-1,  0, +1), Platform( 0, -1, +1)
+    };
+	// x + y + z = 0 !!!
+	const int N = COUNT_PLATFORM_LAYERS-1;
+
+	for (int q = -N; q <= N; q++) {
+		for (int r = -N; r <= N; r++) {
+			for (int s = -N; s <= N; s++) {
+				if (q + r + s == 0) {
+					platforms.push_back(Platform(q, r, s));
+				}
+			}
+		}
+	}
 
 	std::map<std::string, Func> namespaces = 
 	{
@@ -55,13 +58,15 @@ int main(int argc, char **argv)
 
 	std::string command;
 	std::vector<Variable> variables;
+	variables.push_back(Variable(varTypes::digit, "robotMoving", {1}, {0})); // костыльная стандартная переменная
+	variables.push_back(Variable(varTypes::digit, "robotRotate", {1}, {0})); // костыльная стандартная переменная
 
 	Expression expr;
 
 	std::cout << ">>> ";
 	while (std::getline(std::cin, command))
 	{
-		std::cout << "Вы ввели: " << command << std::endl;
+		// std::cout << "Вы ввели: " << command << std::endl;
 		if (command == "exit" || command == "q")
 		{
 			break;
@@ -77,7 +82,58 @@ int main(int argc, char **argv)
 			// std::cout << "подкоманда: " << subcommands[commInd] << std::endl;
 			if (!subcommands[commInd].empty())
 			{
-				if (subcommands[commInd].find("routing") != std::string::npos)
+				if (subcommands[commInd].find("surroundings") != std::string::npos)
+				{
+					std::string strVarname = extractBetweenWords(subcommands[commInd], "(", ")");
+					strVarname=strVarname+"=";
+					
+					
+
+				}
+				else if (subcommands[commInd].find("rotate") != std::string::npos)
+				{
+					std::string strRotate = extractBetweenWords(subcommands[commInd], "(", ")");
+					strRotate="robotRotate="+strRotate;
+					int res;
+					if (expr.isExpression(strRotate))
+					{
+						expr.evaluate(strRotate, variables, res);
+					}
+					if (res % 60 == 0)
+					{
+						res /= 60;
+						std::cout << "Поворот РОБОТА на " << res << std::endl;
+						int curDir = robot.getDir();
+						std::cout << "Текущий поворот робота: " << curDir*60 << std::endl;
+						curDir += res;
+						robot.setDir(curDir);
+						std::cout << "Новый поворот робота: " << robot.getDir()*60 << std::endl;
+					}
+					
+
+				}
+				else if (subcommands[commInd].find("move") != std::string::npos)
+				{
+					std::string strMove = extractBetweenWords(subcommands[commInd], "(", ")");
+					strMove="robotMoving="+strMove;
+					int res;
+					if (expr.isExpression(strMove))
+					{
+						expr.evaluate(strMove, variables, res);
+					}
+					std::cout << "ДВИЖЕНИЕ РОБОТА на" << res << std::endl;
+					std::vector<int> curPos = robot.getPos();
+					std::cout << "Текущая позиция робота: " << curPos[0] << " " << curPos[1] << " " << curPos[2] << std::endl;
+					std::vector<int> moveOn = directions[robot.getDir()].getPos();
+					curPos[0] += moveOn[0]*res;
+					curPos[1] += moveOn[1]*res;
+					curPos[2] += moveOn[2]*res;
+					robot.setPos(curPos);
+					std::cout << "Новая позиция робота: " << curPos[0] << " " << curPos[1] << " " << curPos[2] << std::endl;
+					
+
+				}
+				else if (subcommands[commInd].find("routing") != std::string::npos)
 				{
 					std::string funType = extractToWord(subcommands[commInd], "routing");
 					std::string funName = extractBetweenWords(subcommands[commInd], "routing", "(");
@@ -104,7 +160,6 @@ int main(int argc, char **argv)
 						if (varName != "")
 						{
 							varName = removeSpaces(varName);
-							// varName = extractToWord(varName, "=");
 							std::string alg = varName + std::to_string(result) + ";";
 							subcommands.push_back(alg);
 							
@@ -281,7 +336,7 @@ int main(int argc, char **argv)
 					{
 						std::cout << printVar(subcommands[commInd], variables);
 					}
-					interpretCommand(subcommands[commInd], robot, maze);
+					// interpretCommand(subcommands[commInd], robot, maze); DELETE ME
 				}
 			}
 		}
@@ -291,3 +346,4 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+

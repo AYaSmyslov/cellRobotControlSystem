@@ -4,6 +4,7 @@ set(SOURCES main.cpp
 	declare.cpp
 	print.cpp
 	Robot.cpp
+	Platform.cpp
 	tools.cpp
 	Variable.cpp
 	Parser.cpp
@@ -16,6 +17,7 @@ set(HEADERS
 	Parser.h
 	commands.h
 	Robot.h
+	Platform.h
 	Expression.h
 	Func.h
 )
