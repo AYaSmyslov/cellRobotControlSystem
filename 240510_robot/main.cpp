@@ -5,6 +5,8 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <fstream>
+
 #include "Variable.h"
 #include "commands.h"
 #include "Func.h"
@@ -12,7 +14,42 @@
 #include "Platform.h"
 #include "Robot.h"
 
-#define COUNT_PLATFORM_LAYERS 4
+#define COUNT_PLATFORM_LAYERS 2
+
+
+
+
+
+void loadMap(const std::string& filename, std::vector<Platform>& platforms)
+{
+    std::ifstream infile(filename);
+    if (!infile)
+	{
+        throw std::runtime_error("Unable to open file");
+    }
+
+    int q, r, s;
+    std::string stateStr;
+    while (infile >> q >> r >> s >> stateStr)
+	{
+        PlatformState state;
+        if (stateStr == "free")
+		{
+            state = FREE;
+        } else if (stateStr == "wall")
+		{
+            state = WALL;
+        } else if (stateStr == "exit")
+		{
+            state = EXIT;
+        } else
+		{
+            throw std::runtime_error("Invalid state in map file");
+        }
+        platforms.push_back(Platform(q, r, s, state));
+    }
+}
+
 
 
 
@@ -38,17 +75,30 @@ int main(int argc, char **argv)
         Platform(-1, +1,  0), Platform(-1,  0, +1), Platform( 0, -1, +1)
     };
 	// x + y + z = 0 !!!
-	const int N = COUNT_PLATFORM_LAYERS-1;
-
-	for (int q = -N; q <= N; q++) {
-		for (int r = -N; r <= N; r++) {
-			for (int s = -N; s <= N; s++) {
-				if (q + r + s == 0) {
-					platforms.push_back(Platform(q, r, s));
-				}
-			}
-		}
+	try
+	{
+        loadMap("map.txt", platforms);
+    }
+	catch (const std::exception& e)
+	{
+        std::cerr << "Ошибка загрузки карты: " << e.what() << std::endl;
+        return 1;
+    }
+	for (int i=0; i < platforms.size();i++)
+	{
+		std::cout << i << ": " << platforms[i].getPos()[0] << " " << platforms[i].getPos()[1] << " " << platforms[i].getPos()[2] << " " << platforms[i].getState() << std::endl;
 	}
+	// const int N = COUNT_PLATFORM_LAYERS-1;
+
+	// for (int q = -N; q <= N; q++) {
+	// 	for (int r = -N; r <= N; r++) {
+	// 		for (int s = -N; s <= N; s++) {
+	// 			if (q + r + s == 0) {
+	// 				platforms.push_back(Platform(q, r, s, PlatformState::FREE));
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	std::map<std::string, Func> namespaces = 
 	{
@@ -131,7 +181,27 @@ int main(int argc, char **argv)
 					robot.setPos(curPos);
 					std::cout << "Новая позиция робота: " << curPos[0] << " " << curPos[1] << " " << curPos[2] << std::endl;
 					
-
+					for (int i=0; i < platforms.size();i++)
+					{
+						std::vector<int> platformPos = platforms[i].getPos();
+						if (platformPos[0] == curPos[0] && platformPos[1] == curPos[1] && platformPos[2] == curPos[2])
+						{
+							if (platforms[i].getState() == PlatformState::FREE)
+							{
+								// все норм
+							}
+							if (platforms[i].getState() == PlatformState::WALL)
+							{
+								std::cout << "Робот считает, что его хотят убить, он обиделся." << std::endl;
+								exit(1);
+							}
+							if (platforms[i].getState() == PlatformState::EXIT)
+							{
+								std::cout << "Робот вышел из лабиринта." << std::endl;
+								exit(0);
+							}
+						}
+					}
 				}
 				else if (subcommands[commInd].find("routing") != std::string::npos)
 				{
