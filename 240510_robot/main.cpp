@@ -14,9 +14,9 @@
 #include "Platform.h"
 #include "Robot.h"
 
-#define COUNT_PLATFORM_LAYERS 2
+// #define COUNT_PLATFORM_LAYERS 2
 
-
+int mind = 10;
 
 
 
@@ -84,10 +84,25 @@ int main(int argc, char **argv)
         std::cerr << "Ошибка загрузки карты: " << e.what() << std::endl;
         return 1;
     }
-	for (int i=0; i < platforms.size();i++)
+
+	// for (int i=0; i < platforms.size();i++)
+	// {
+	// 	std::cout << i << ": " << platforms[i].getPos()[0] << " " << platforms[i].getPos()[1] << " " << platforms[i].getPos()[2] << " " << platforms[i].getState() << std::endl;
+	// }
+
+	int tmpSize = platforms.size()-1;
+	int cntLayers = 1;
+	int stepSize = 6;
+	while (tmpSize > 0)
 	{
-		std::cout << i << ": " << platforms[i].getPos()[0] << " " << platforms[i].getPos()[1] << " " << platforms[i].getPos()[2] << " " << platforms[i].getState() << std::endl;
+		tmpSize -= stepSize;
+		stepSize += 6;
+		cntLayers++;
 	}
+	// std::cout << "Количество слоев: " << cntLayers << std::endl;
+
+	const int MAX_VISIBLITY = (cntLayers < 5 ) ? cntLayers : 5;
+
 	// const int N = COUNT_PLATFORM_LAYERS-1;
 
 	// for (int q = -N; q <= N; q++) {
@@ -108,8 +123,8 @@ int main(int argc, char **argv)
 
 	std::string command;
 	std::vector<Variable> variables;
-	variables.push_back(Variable(varTypes::digit, "robotMoving", {1}, {0})); // костыльная стандартная переменная
-	variables.push_back(Variable(varTypes::digit, "robotRotate", {1}, {0})); // костыльная стандартная переменная
+	variables.push_back(Variable(varTypes::digit, "robotMoving", {1}, {0}));
+	variables.push_back(Variable(varTypes::digit, "robotRotate", {1}, {0}));
 
 	Expression expr;
 
@@ -127,17 +142,79 @@ int main(int argc, char **argv)
 		// for (auto &subcommands[commInd] : subcommands)
 		for (int commInd=0; commInd < subcommands.size(); commInd++)
 		{
-			
+			mind--;
+
+			if (mind == 0)
+			{
+				std::cout << "Робот сошел с ума от недостатка вежливости" << std::endl;
+				exit(1);
+			}
 			// std::string subcommands[commInd] = command.substr(0, pos);
 			// std::cout << "подкоманда: " << subcommands[commInd] << std::endl;
 			if (!subcommands[commInd].empty())
 			{
-				if (subcommands[commInd].find("surroundings") != std::string::npos)
+				if (subcommands[commInd].find("thank you") != std::string::npos)
+				{
+					mind+=2;
+					if (mind > 10)
+					{
+						std::cout << "Робот сошел с ума от излишней вежливости" << std::endl;
+						exit(1);
+					}
+				}
+				else if (subcommands[commInd].find("please") != std::string::npos)
+				{
+					mind+=2;
+					if (mind > 10)
+					{
+						std::cout << "Робот сошел с ума от излишней вежливости" << std::endl;
+						exit(1);
+					}
+				}
+				else if (subcommands[commInd].find("surroundings") != std::string::npos)
 				{
 					std::string strVarname = extractBetweenWords(subcommands[commInd], "(", ")");
 					strVarname=strVarname+"=";
 					
-					
+					for (auto oDir : directions)
+					{
+						int lineCheck = 1;
+
+						std::vector<int> robotPos = robot.getPos();
+						std::vector<int> checkPlatform = robotPos;
+						bool canCheck = true;
+						while ((lineCheck < MAX_VISIBLITY) && canCheck)
+						{
+							checkPlatform[0] += oDir.getPos()[0];
+							checkPlatform[1] += oDir.getPos()[1];
+							checkPlatform[2] += oDir.getPos()[2];
+							for (int i=0; i < platforms.size();i++)
+							{
+								std::vector<int> platformPos = platforms[i].getPos();
+								if (platformPos[0] == checkPlatform[0] && platformPos[1] == checkPlatform[1] && platformPos[2] == checkPlatform[2])
+								{
+									if (platforms[i].getState() == PlatformState::FREE)
+									{
+										// можно дальше смотреть
+									}
+									if (platforms[i].getState() == PlatformState::WALL)
+									{
+										std::cout << "[" << platformPos[0] << "," << platformPos[1] << "," << platformPos[2] << "]" << " стена" << std::endl;
+										canCheck = false;
+										break;
+									}
+									if (platforms[i].getState() == PlatformState::EXIT)
+									{
+										std::cout << "[" << platformPos[0] << "," << platformPos[1] << "," << platformPos[2] << "]" << " выход" << std::endl;
+										mind=10;
+										canCheck = false; 
+										break;
+									}
+								}
+							}
+							lineCheck++;
+						}
+					}
 
 				}
 				else if (subcommands[commInd].find("rotate") != std::string::npos)
@@ -175,30 +252,33 @@ int main(int argc, char **argv)
 					std::vector<int> curPos = robot.getPos();
 					std::cout << "Текущая позиция робота: " << curPos[0] << " " << curPos[1] << " " << curPos[2] << std::endl;
 					std::vector<int> moveOn = directions[robot.getDir()].getPos();
-					curPos[0] += moveOn[0]*res;
-					curPos[1] += moveOn[1]*res;
-					curPos[2] += moveOn[2]*res;
+					for (int i = 0; i < res; i++)
+					{
+					curPos[0] += moveOn[0];
+					curPos[1] += moveOn[1];
+					curPos[2] += moveOn[2];
 					robot.setPos(curPos);
 					std::cout << "Новая позиция робота: " << curPos[0] << " " << curPos[1] << " " << curPos[2] << std::endl;
 					
-					for (int i=0; i < platforms.size();i++)
-					{
-						std::vector<int> platformPos = platforms[i].getPos();
-						if (platformPos[0] == curPos[0] && platformPos[1] == curPos[1] && platformPos[2] == curPos[2])
+						for (int i=0; i < platforms.size();i++)
 						{
-							if (platforms[i].getState() == PlatformState::FREE)
+							std::vector<int> platformPos = platforms[i].getPos();
+							if (platformPos[0] == curPos[0] && platformPos[1] == curPos[1] && platformPos[2] == curPos[2])
 							{
-								// все норм
-							}
-							if (platforms[i].getState() == PlatformState::WALL)
-							{
-								std::cout << "Робот считает, что его хотят убить, он обиделся." << std::endl;
-								exit(1);
-							}
-							if (platforms[i].getState() == PlatformState::EXIT)
-							{
-								std::cout << "Робот вышел из лабиринта." << std::endl;
-								exit(0);
+								if (platforms[i].getState() == PlatformState::FREE)
+								{
+									// все норм
+								}
+								if (platforms[i].getState() == PlatformState::WALL)
+								{
+									std::cout << "Робот считает, что его хотят убить, он обиделся." << std::endl;
+									exit(1);
+								}
+								if (platforms[i].getState() == PlatformState::EXIT)
+								{
+									std::cout << "Робот вышел из лабиринта." << std::endl;
+									exit(0);
+								}
 							}
 						}
 					}
@@ -287,9 +367,9 @@ int main(int argc, char **argv)
 					bool haveElse = false;
 					params.push_back(extractBetweenWords(subcommands[commInd], "check", "then"));
 					params.push_back(extractBetweenWords(subcommands[commInd], "then {", "}"));
-					if (subcommands[commInd].find("overwise") != std::string::npos)
+					if (subcommands[commInd].find("otherwise") != std::string::npos)
 					{
-						std::string tmp = extractFromWord(subcommands[commInd], "overwise {");
+						std::string tmp = extractFromWord(subcommands[commInd], "otherwise {");
 						tmp.pop_back();
 						params.push_back(tmp);
 						haveElse = true;
